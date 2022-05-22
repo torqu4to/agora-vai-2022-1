@@ -196,7 +196,7 @@ export default function AlunoList() {
 
     async function deleteItem() {
       try {
-        await api.delete(`aluno/${deleteId}`)
+        await api.delete(`alunos/${deleteId}`)
         // Fecha a caixa de diálogo e exibe a barra de alerta
         const newState = {
           ...state, 
