@@ -6,6 +6,9 @@ import ptLocale from 'date-fns/locale/pt-BR'
 import { makeStyles } from '@mui/styles'
 import InputMask from 'react-input-mask'
 import MenuItem from '@mui/material/MenuItem'
+import Toolbar from '@mui/material/Toolbar'
+import Button from '@mui/material/Button'
+import AlertBar from '../ui/AlertBar'
 
 const useStyles = makeStyles(theme => ({
     form: {
@@ -19,7 +22,12 @@ const useStyles = makeStyles(theme => ({
             maxWidth: '500px',
             marginBottom: '24px'
         }
+    },
+    toolbar: {
+        width: '100%',
+        justifyContent: 'space-around'
     }
+
 }))
 
 const unidadesFed = [
@@ -33,6 +41,12 @@ const unidadesFed = [
     { sigla: 'SP', nome: 'São Paulo' }
 ]
 
+const turmas = [
+    { sigla: 'ESP10', descricao: '[ESP10] Espanhol iniciante' },
+    { sigla: 'FRA10', descricao: '[FRA10] Francês iniciante' },
+    { sigla: 'ING10', descricao: '[ING10] Inglês iniciante' }
+]
+
 export default function AlunoForm() {
 
     const classes = useStyles()
@@ -40,15 +54,54 @@ export default function AlunoForm() {
     const [state, setState] = React.useState(
         // Lazy initalizer
         () => ({
-            aluno: {}
+            // Campos correspondentes a controles de seleção
+            // precisam ter um valor inicial  
+            aluno: { uf: '', turma: '' },
+            alertSeverity: 'success',
+            isAlertOpen: false,
+            alertMessage: ''
         })
     )
     const {
-        aluno
-    } = state 
+        aluno,
+        alertSeverity,
+        isAlertOpen,
+        alertMessage
+    } = state
+
+    function handleInputChange(event, fieldName = event.target.id) {
+        console.log(`fieldName: ${fieldName}, value: ${event?.target?.value}`)
+
+        // Sincroniza o valor do input com a variável de estado
+        const newAluno = {...aluno}     // Tira uma cópia do aluno
+
+        // O componente DesktopDatePicker envia newValue em vez de
+        // event; portanto, é necessário tratamento específico para ele
+        if(fieldName === 'data_nascimento') newAluno[fieldName] = event
+        else newAluno[fieldName] = event.target.value // Atualiza o campo
+        
+        setState({ ...state, aluno: newAluno })
+    }
+
+    function handleAlertClose(event, reason) {
+        if (reason === 'clickaway') {
+          return;
+        }
+    
+        // Fecha a barra de alerta
+        setState({...state, isAlertOpen: false})
+    }
 
     return (
         <>
+            <AlertBar 
+                severity={alertSeverity} 
+                open={isAlertOpen}
+                onClose={handleAlertClose}
+            >
+                {alertMessage}
+            </AlertBar>
+            
             <h1>Cadastro de alunos</h1>
 
             <form className={classes.form}>
@@ -61,18 +114,20 @@ export default function AlunoForm() {
                     placeholder="Informe o nome completo do(a) aluno(a)"
                     required
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
-                <LocalizationProvider dateAdapter={AdapterDateFns} locale={ptLocale}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
                     <DesktopDatePicker
                         label="Data de nascimento"
                         inputFormat="dd/MM/yyyy"
                         value={aluno.data_nascimento}
+                        onChange={newValue => handleInputChange(newValue, 'data_nascimento')}
                         renderInput={(params) => <TextField
                             id="data_nascimento"
                             variant="filled"
                             required
-                            fullWidth 
+                            fullWidth                             
                             {...params} 
                         />}
                     />
@@ -86,11 +141,13 @@ export default function AlunoForm() {
                     placeholder="Informe o documento de identidade"
                     required
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
                 <InputMask
                     mask="999.999.999-99"
                     value={aluno.cpf}
+                    onChange={event => handleInputChange(event, 'cpf')}
                 >
                     {
                         () => <TextField 
@@ -112,6 +169,7 @@ export default function AlunoForm() {
                     placeholder="Informe o logradouro"
                     required
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
                 <TextField 
@@ -122,6 +180,7 @@ export default function AlunoForm() {
                     placeholder="Informe o número do imóvel"
                     required
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
                 <TextField 
@@ -131,6 +190,7 @@ export default function AlunoForm() {
                     variant="filled"
                     placeholder="Informe o complemento do imóvel (se houver)"
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
                 <TextField 
@@ -141,6 +201,7 @@ export default function AlunoForm() {
                     placeholder="Informe o município"
                     required
                     fullWidth
+                    onChange={handleInputChange}
                 />
 
                 <TextField 
@@ -152,6 +213,7 @@ export default function AlunoForm() {
                     required
                     fullWidth
                     select
+                    onChange={event => handleInputChange(event, 'uf')}
                 >
                     {
                         unidadesFed.map(uf => (
@@ -162,7 +224,72 @@ export default function AlunoForm() {
                     }
                 </TextField>
 
+                <InputMask
+                    mask="(99) 99999-9999"
+                    value={aluno.telefone}
+                    onChange={event => handleInputChange(event, 'telefone')}
+                >
+                    {
+                        () => <TextField 
+                            id="telefone" 
+                            label="Celular"
+                            variant="filled"
+                            placeholder="Informe o celular"
+                            required
+                            fullWidth
+                        />
+                    }
+                </InputMask>
+
+                <TextField 
+                    id="email" 
+                    label="E-mail"
+                    value={aluno.email}
+                    variant="filled"
+                    placeholder="Informe o e-mail"
+                    required
+                    fullWidth
+                    onChange={handleInputChange}
+                />
+
+                <TextField 
+                    id="turma" 
+                    label="Turma"
+                    value={aluno.turma}
+                    variant="filled"
+                    placeholder="Informe a turma"
+                    required
+                    fullWidth
+                    select
+                    onChange={event => handleInputChange(event, 'turma')}
+                >
+                    {
+                        turmas.map(t => (
+                            <MenuItem key={t.sigla} value={t.sigla}>
+                                {t.descricao}
+                            </MenuItem>
+                        ))
+                    }
+                </TextField>
+
+                <Toolbar className={classes.toolbar}>
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        type="submit"
+                    >
+                        Enviar
+                    </Button>
+                    <Button
+                        variant="outlined"
+                    >
+                        Voltar
+                    </Button>
+                </Toolbar>
+
             </form>
+
+            <p>{JSON.stringify(aluno)}</p>
         </>
     )
 }
