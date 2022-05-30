@@ -11,7 +11,8 @@ import Button from '@mui/material/Button'
 import AlertBar from '../ui/AlertBar'
 import ModalProgress from '../ui/ModalProgress'
 import api from '../api'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 const useStyles = makeStyles(theme => ({
     form: {
@@ -56,16 +57,32 @@ export default function AlunoForm() {
 
     const navigate = useNavigate()
 
+    const params = useParams()
+
     const [state, setState] = React.useState(
         // Lazy initalizer
         () => ({
-            // Campos correspondentes a controles de seleção
-            // precisam ter um valor inicial  
-            aluno: { uf: '', turma: '' },
+            aluno: { 
+                nome: '',
+                data_nascimento: '',
+                doc_identidade: '',
+                cpf: '',
+                logradouro: '',
+                num_imovel: '',
+                complemento: '',
+                bairro: '',
+                municipio: '',
+                uf: '', 
+                telefone: '',
+                email: '',
+                turma: ''                 
+            },
             alertSeverity: 'success',
             isAlertOpen: false,
             alertMessage: '',
-            isModalProgressOpen: false
+            isModalProgressOpen: false,
+            pageTitle: 'Cadastrar novo aluno',
+            isDialogOpen: false
         })
     )
     const {
@@ -73,8 +90,41 @@ export default function AlunoForm() {
         alertSeverity,
         isAlertOpen,
         alertMessage,
-        isModalProgressOpen
+        isModalProgressOpen,
+        pageTitle,
+        isDialogOpen
     } = state
+
+    React.useLayoutEffect(() => {
+
+        // Se houver parâmetro na rota, estamos editando um registro já
+        // existente. Portanto, precisamos buscar os dados desse registro
+        // para carregar nos campos e editar
+        if(params.id) {
+            fetchData()
+        }
+
+    }, [])  // Dependências vazias, executa só no carregamento do componente
+
+    async function fetchData() {
+        try {
+            const response = await api.get(`alunos/${params.id}`)
+            setState({
+                ...state,
+                aluno: response.data,
+                pageTitle: 'Editando aluno id. ' + params.id
+            })
+        }
+        catch(erro) {
+            setState({
+                ...state,
+                alertSeverity: 'error',
+                alertMessage: 'ERRO: ' + erro.message,
+                isAlertOpen: true,
+                pageTitle: '## ERRO ##'
+            })
+        }
+    }
 
     function handleInputChange(event, fieldName = event.target.id) {
         console.log(`fieldName: ${fieldName}, value: ${event?.target?.value}`)
@@ -113,13 +163,16 @@ export default function AlunoForm() {
         setState({...state, isModalProgressOpen: true})
 
         try {
-            await api.post('alunos', aluno)
+            // Se aluno.id existe, estamos editando, verbo PUT
+            if(aluno.id) await api.put(`alunos/${params.id}`, aluno)
+            // Senão, estamos criando um novo, verbo POST
+            else await api.post('alunos', aluno)
+
             setState({
                 ...state,
                 isAlertOpen: true,
                 alertSeverity: 'success',
-                alertMessage: 'Dados salvos com sucesso',
-                isModalProgressOpen: true
+                alertMessage: 'Dados salvos com sucesso'
             })
         } 
         catch(erro) {
@@ -127,10 +180,36 @@ export default function AlunoForm() {
                 ...state,
                 isAlertOpen: true,
                 alertSeverity: 'error',
-                alertMessage: 'ERRO: ' + erro.message,
-                isModalProgressOpen: true
+                alertMessage: 'ERRO: ' + erro.message
             })
         }
+    }
+
+    function isFormModified() {
+        for(let field in aluno) {
+            if(aluno[field] !== '') return true
+        }
+        return false
+    }
+
+    function handleVoltarButtonClick() {
+
+        // Se o formulário tiver sido modificado, chama a caixa de diálogo
+        // para perguntar se o usuário realmente quer voltar, perdendo dados
+        if(isFormModified()) setState({...state, isDialogOpen: true})
+
+        // Se não houve modificação, pode voltar diretamente para a listagem
+        else navigate('/aluno')
+
+    }
+
+    function handleDialogClose(answer) {
+
+        // Fecha a caixa de diálogo
+        setState({...state, isDialogOpen: false})
+
+        // Se o usuário tiver respondido "sim", volta à listagem
+        if(answer) navigate('/aluno')
     }
 
     return (
@@ -144,8 +223,16 @@ export default function AlunoForm() {
             </AlertBar>
 
             <ModalProgress open={isModalProgressOpen} />
+
+            <ConfirmDialog 
+                title="Os dados foram modificados" 
+                open={isDialogOpen}
+                onClose={handleDialogClose}
+            >
+                Deseja realmente descartar as informações não salvas?
+            </ConfirmDialog>
             
-            <h1>Cadastro de alunos</h1>
+            <h1>{pageTitle}</h1>
 
             <form className={classes.form} onSubmit={handleFormSubmit}>
                 
@@ -336,6 +423,7 @@ export default function AlunoForm() {
                     </Button>
                     <Button
                         variant="outlined"
+                        onClick={handleVoltarButtonClick}
                     >
                         Voltar
                     </Button>
@@ -343,7 +431,7 @@ export default function AlunoForm() {
 
             </form>
 
-            <p>{JSON.stringify(aluno)}</p>
+            {/* <p>{JSON.stringify(aluno)}</p> */}
         </>
     )
 }
