@@ -9,6 +9,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Toolbar from '@mui/material/Toolbar'
 import Button from '@mui/material/Button'
 import AlertBar from '../ui/AlertBar'
+import ModalProgress from '../ui/ModalProgress'
+import api from '../api'
+import { useNavigate } from 'react-router-dom'
 
 const useStyles = makeStyles(theme => ({
     form: {
@@ -51,6 +54,8 @@ export default function AlunoForm() {
 
     const classes = useStyles()
 
+    const navigate = useNavigate()
+
     const [state, setState] = React.useState(
         // Lazy initalizer
         () => ({
@@ -59,14 +64,16 @@ export default function AlunoForm() {
             aluno: { uf: '', turma: '' },
             alertSeverity: 'success',
             isAlertOpen: false,
-            alertMessage: ''
+            alertMessage: '',
+            isModalProgressOpen: false
         })
     )
     const {
         aluno,
         alertSeverity,
         isAlertOpen,
-        alertMessage
+        alertMessage,
+        isModalProgressOpen
     } = state
 
     function handleInputChange(event, fieldName = event.target.id) {
@@ -88,8 +95,42 @@ export default function AlunoForm() {
           return;
         }
     
-        // Fecha a barra de alerta
-        setState({...state, isAlertOpen: false})
+        // Fecha a barra de alerta e o progresso modal
+        setState({...state, isAlertOpen: false, isModalProgressOpen: false})
+
+        // Se os dados forem salvos com sucesso, volta para a página
+        // de listagem
+        if(alertSeverity === 'success') navigate('/aluno')
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault()  // Evita o recarregamento da página
+        saveData()
+    }
+
+    async function saveData() {
+        // Exibe o progresso modal
+        setState({...state, isModalProgressOpen: true})
+
+        try {
+            await api.post('alunos', aluno)
+            setState({
+                ...state,
+                isAlertOpen: true,
+                alertSeverity: 'success',
+                alertMessage: 'Dados salvos com sucesso',
+                isModalProgressOpen: true
+            })
+        } 
+        catch(erro) {
+            setState({
+                ...state,
+                isAlertOpen: true,
+                alertSeverity: 'error',
+                alertMessage: 'ERRO: ' + erro.message,
+                isModalProgressOpen: true
+            })
+        }
     }
 
     return (
@@ -101,10 +142,12 @@ export default function AlunoForm() {
             >
                 {alertMessage}
             </AlertBar>
+
+            <ModalProgress open={isModalProgressOpen} />
             
             <h1>Cadastro de alunos</h1>
 
-            <form className={classes.form}>
+            <form className={classes.form} onSubmit={handleFormSubmit}>
                 
                 <TextField 
                     id="nome" 
@@ -189,6 +232,17 @@ export default function AlunoForm() {
                     value={aluno.complemento}
                     variant="filled"
                     placeholder="Informe o complemento do imóvel (se houver)"
+                    fullWidth
+                    onChange={handleInputChange}
+                />
+
+                <TextField 
+                    id="bairro" 
+                    label="Bairro"
+                    value={aluno.bairro}
+                    variant="filled"
+                    placeholder="Informe o bairro"
+                    required
                     fullWidth
                     onChange={handleInputChange}
                 />
