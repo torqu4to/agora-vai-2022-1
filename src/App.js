@@ -7,6 +7,7 @@ import Box from '@mui/material/Box'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AlunoList from './routed/AlunoList'
 import AlunoForm from './routed/AlunoForm'
+import HomePage from './routed/HomePage'
 
 const customTheme = createTheme({
   palette: {
@@ -34,6 +35,7 @@ function App() {
 
           <Box component="main" sx={{ margin: '24px' }}>
             <Routes>
+              <Route path="/" element={<HomePage />} />
               <Route path="/aluno" element={<AlunoList />} />
               <Route path="/aluno/novo" element={<AlunoForm />} />
               <Route path="/aluno/:id" element={<AlunoForm />} />
