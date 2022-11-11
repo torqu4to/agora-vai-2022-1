@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const api = axios.create({
     // Precisa terminar com /
-    baseURL: 'https://api.render.com/deploy/srv-cdn4i7cgqg4dscgcclcg?key=gfwGWxjxnp0'  
+    baseURL: 'https://agoravai-bruno.onrender.com'  
 })
 
 export default api
