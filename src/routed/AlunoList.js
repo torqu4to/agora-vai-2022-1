@@ -13,7 +13,6 @@ import Toolbar from '@mui/material/Toolbar'
 import Button from '@mui/material/Button'
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-
 const useStyles = makeStyles(theme => ({
   datagrid: {
     '& .MuiDataGrid-row button': {
@@ -103,7 +102,7 @@ export default function AlunoList() {
         //flex: 1
       },
       {
-        /*field: 'turma.nome', */
+        // field: 'turma.nome',
         headerName: 'Turma',
         width: 150,
         valueGetter: params => params.row.turma?.nome
@@ -170,8 +169,8 @@ export default function AlunoList() {
 
     async function fetchData(newState = state) {
         try {
-            const response = await api.get('aluno')
-            setState({...newState, data: response.data, isDialogOpen: false})
+            const response = await api.get('aluno').json()
+            setState({...newState, data: response, isDialogOpen: false})
         }
         catch(erro) {
             // Mostrar erro com barra de alerta

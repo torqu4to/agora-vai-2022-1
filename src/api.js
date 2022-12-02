@@ -1,11 +1,9 @@
-import axios from 'axios'
+import ky from 'ky'
 
-const api = axios.create({
-    // Precisa terminar com /
-    baseURL: 'https://agoravai-bruno.onrender.com',
-    timeout: 5000,
-    //Envia os cookies de vikta em todas as requisições
-    withCredentials: true
+const api = ky.extend({
+    prefixUrl: 'https://agoravai-bruno.onrender.com/',
+    credentials: 'include',
+    timeout: 10000
 })
 
 export default api

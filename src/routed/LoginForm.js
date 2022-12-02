@@ -36,13 +36,10 @@ export default function LoginForm() {
     setState({...state, aguardando: true})    // Exibe o backdrop
     event.preventDefault()  // Evita o recarregamento da página
     try {
-      const result = await api.post('usuario/login', {email, senha})
-      console.log({result})
-      // Armazena o token no session storage
-      window.sessionStorage.setItem('app-data', result.data?.token)
+      const response = await api.post('usuario/login', {json: {email, senha}}).json()
       setState({
         ...state, 
-        resultado: result.data, 
+        resultado: response, 
         aguardando: false,
         alertBarOpen: true,
         alertBarSeverity: 'success',
